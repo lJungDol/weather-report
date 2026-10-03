@@ -7,10 +7,23 @@
 GitHub 저장소 링크: https://github.com/lJungDol/weather-report
 """
 
+import sys
 import requests
 from datetime import datetime, timedelta
 import json
 from typing import Optional, Tuple, Dict, Any, List
+
+# Windows 콘솔 입출력 인코딩 UTF-8 설정
+if sys.platform.startswith("win"):
+    try:
+        if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8")
+        if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8")
+        if sys.stdin and hasattr(sys.stdin, "reconfigure"):
+            sys.stdin.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 # 대한민국 주요 도시 위도 및 경도 좌표 매핑 테이블
 CITY_COORDINATES: Dict[str, Tuple[float, float]] = {
