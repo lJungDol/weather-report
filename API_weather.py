@@ -3,6 +3,8 @@
 - 사용자에게 지역을 입력받음 (기본값: 서울)
 - 오늘, 내일, 모레까지 3일간의 날씨를 오전 6시, 오후 3시 기준으로 표시
 - Open-Meteo API 사용 (인증키 불필요, 무료)
+
+GitHub 저장소 링크: https://github.com/lJungDol/weather-report
 """
 
 import requests
@@ -79,7 +81,7 @@ def get_coordinates(city_name: str) -> Optional[Tuple[float, float]]:
     if cleaned_name in CITY_COORDINATES:
         return CITY_COORDINATES[cleaned_name]
 
-    # '시', '군', '구' 제거 후 재시도 (예: '천안시' -> '천안')
+    # '시', '군', '구' 접미사 제거 후 재시도 (예: '천안시' -> '천안')
     for suffix in ["시", "군", "구"]:
         if cleaned_name.endswith(suffix):
             prefix = cleaned_name[:-1]
@@ -100,6 +102,7 @@ def get_coordinates(city_name: str) -> Optional[Tuple[float, float]]:
             data = res.json()
             results = data.get("results", [])
             if results:
+                # 대한민국(KR) 국가 코드 결과 우선 탐색
                 for item in results:
                     if item.get("country_code") == "KR":
                         return round(item["latitude"], 4), round(item["longitude"], 4)
