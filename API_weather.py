@@ -195,3 +195,45 @@ def display_weather_forecast(city: str, weather_data: Dict[str, Any]) -> None:
             print(f"\n🌡 일일 기온: 최저 {min_temp} °C / 최고 {max_temp} °C")
 
         print("\n==================================================")
+
+
+def save_weather_to_json(city: str, weather_data: Dict[str, Any]) -> str:
+    """조회한 날씨 예보 데이터를 JSON 파일로 저장합니다."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"weather_{city}_{timestamp}.json"
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(weather_data, f, ensure_ascii=False, indent=4)
+    return filename
+
+
+def main() -> None:
+    print("🌦 날씨 예보 프로그램 (Open-Meteo API)")
+    print("--------------------------------------------------")
+    print("오전 6시, 오후 3시 기준으로 3일간 날씨를 제공합니다.\n")
+
+    input_city = input("날씨를 확인할 지역을 입력하세요 (기본값: 서울): ").strip()
+    city = input_city if input_city else "서울"
+
+    coords = get_coordinates(city)
+    if not coords:
+        print(f"❌ '{city}' 지역의 위치 정보를 찾을 수 없습니다. 지역명을 확인해주세요.")
+        return
+
+    lat, lon = coords
+    print(f"📍 {city} (위도: {lat}, 경도: {lon}) 의 날씨 정보를 가져옵니다...\n")
+
+    weather_data = fetch_weather_forecast(lat, lon, days=3)
+    if not weather_data:
+        print("❌ 날씨 정보를 가져오는 데 실패했습니다.")
+        return
+
+    display_weather_forecast(city, weather_data)
+
+    save_choice = input("\n날씨 정보를 JSON 파일로 저장하시겠습니까? (y/n): ").strip().lower()
+    if save_choice == "y":
+        filename = save_weather_to_json(city, weather_data)
+        print(f"날씨 정보가 '{filename}'에 성공적으로 저장되었습니다.")
+
+
+if __name__ == "__main__":
+    main()
