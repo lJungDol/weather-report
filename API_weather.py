@@ -32,6 +32,43 @@ CITY_COORDINATES: Dict[str, Tuple[float, float]] = {
     "포항": (36.0190, 129.3435),
 }
 
+# WMO 날씨 코드 한국어 매핑
+WMO_WEATHER_CODES: Dict[int, str] = {
+    0: "맑음",
+    1: "주로 맑음",
+    2: "구름 조금",
+    3: "흐림",
+    45: "안개",
+    48: "서리 안개",
+    51: "약한 이슬비",
+    53: "이슬비",
+    55: "강한 이슬비",
+    56: "약한 어는 이슬비",
+    57: "강한 어는 이슬비",
+    61: "약한 비",
+    63: "비",
+    65: "강한 비",
+    66: "약한 어는 비",
+    67: "강한 어는 비",
+    71: "약한 눈",
+    73: "눈",
+    75: "강한 눈",
+    77: "싸락눈",
+    80: "약한 소나기",
+    81: "소나기",
+    82: "강한 소나기",
+    85: "약한 눈 소나기",
+    86: "강한 눈 소나기",
+    95: "뇌우",
+    96: "우박을 동반한 약한 뇌우",
+    99: "우박을 동반한 강한 뇌우",
+}
+
+
+def get_weather_desc(code: int) -> str:
+    """WMO 날씨 코드를 한글 설명 문자열로 변환합니다."""
+    return WMO_WEATHER_CODES.get(code, "알 수 없음")
+
 
 def get_coordinates(city_name: str) -> Optional[Tuple[float, float]]:
     """도시 이름을 받아 위도와 경도를 반환합니다.
@@ -73,3 +110,26 @@ def get_coordinates(city_name: str) -> Optional[Tuple[float, float]]:
         print(f"지오코딩 조회 중 오류 발생: {e}")
 
     return None
+
+
+def fetch_weather_forecast(latitude: float, longitude: float, days: int = 3) -> Optional[Dict[str, Any]]:
+    """Open-Meteo API를 호출하여 날씨 예보 데이터를 가져옵니다."""
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "hourly": "temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m",
+        "daily": "temperature_2m_max,temperature_2m_min",
+        "timezone": "Asia/Seoul",
+        "forecast_days": days
+    }
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"API 요청 실패 (HTTP 상태 코드: {response.status_code})")
+            return None
+    except requests.RequestException as e:
+        print(f"네트워크 오류 발생: {e}")
+        return None
