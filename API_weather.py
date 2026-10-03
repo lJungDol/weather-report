@@ -8,7 +8,7 @@
 import requests
 from datetime import datetime, timedelta
 import json
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, List
 
 # 대한민국 주요 도시 위도 및 경도 좌표 매핑 테이블
 CITY_COORDINATES: Dict[str, Tuple[float, float]] = {
@@ -100,11 +100,9 @@ def get_coordinates(city_name: str) -> Optional[Tuple[float, float]]:
             data = res.json()
             results = data.get("results", [])
             if results:
-                # 대한민국(KR) 결과 우선 선택
                 for item in results:
                     if item.get("country_code") == "KR":
                         return round(item["latitude"], 4), round(item["longitude"], 4)
-                # 없으면 첫 번째 결과 사용
                 return round(results[0]["latitude"], 4), round(results[0]["longitude"], 4)
     except Exception as e:
         print(f"지오코딩 조회 중 오류 발생: {e}")
@@ -133,3 +131,67 @@ def fetch_weather_forecast(latitude: float, longitude: float, days: int = 3) -> 
     except requests.RequestException as e:
         print(f"네트워크 오류 발생: {e}")
         return None
+
+
+def display_weather_forecast(city: str, weather_data: Dict[str, Any]) -> None:
+    """날씨 예보 데이터를 정해진 서식에 맞추어 화면에 출력합니다."""
+    print("==================================================")
+    print(f"📍 {city} 날씨 예보 (오전 6시 / 오후 3시 기준)")
+    print("==================================================")
+
+    hourly = weather_data.get("hourly", {})
+    daily = weather_data.get("daily", {})
+    hourly_times: List[str] = hourly.get("time", [])
+    daily_times: List[str] = daily.get("time", [])
+
+    day_labels = ["오늘", "내일", "모레"]
+
+    for i, date_str in enumerate(daily_times):
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+        month_day_str = dt.strftime("%m.%d.")
+        label_prefix = day_labels[i] if i < len(day_labels) else f"{i}일 후"
+
+        print(f"\n📅 {label_prefix} ({month_day_str})")
+        print("----------------------------------------")
+
+        # 오전 06:00 데이터
+        time_06 = f"{date_str}T06:00"
+        if time_06 in hourly_times:
+            idx_06 = hourly_times.index(time_06)
+            code_06 = hourly["weather_code"][idx_06]
+            temp_06 = round(hourly["temperature_2m"][idx_06])
+            pop_06 = round(hourly["precipitation_probability"][idx_06])
+            hum_06 = round(hourly["relative_humidity_2m"][idx_06])
+            wind_06 = round(hourly["wind_speed_10m"][idx_06])
+
+            print("🌅 오전 06:00")
+            print(f"   날씨: {get_weather_desc(code_06)}")
+            print(f"   기온: {temp_06} °C")
+            print(f"   강수확률: {pop_06}%")
+            print(f"   습도: {hum_06}%")
+            print(f"   풍속: {wind_06} m/s")
+
+        # 오후 15:00 데이터
+        time_15 = f"{date_str}T15:00"
+        if time_15 in hourly_times:
+            idx_15 = hourly_times.index(time_15)
+            code_15 = hourly["weather_code"][idx_15]
+            temp_15 = round(hourly["temperature_2m"][idx_15])
+            pop_15 = round(hourly["precipitation_probability"][idx_15])
+            hum_15 = round(hourly["relative_humidity_2m"][idx_15])
+            wind_15 = round(hourly["wind_speed_10m"][idx_15])
+
+            print("\n🌇 오후 15:00")
+            print(f"   날씨: {get_weather_desc(code_15)}")
+            print(f"   기온: {temp_15} °C")
+            print(f"   강수확률: {pop_15}%")
+            print(f"   습도: {hum_15}%")
+            print(f"   풍속: {wind_15} m/s")
+
+        # 일일 최저 / 최고 기온
+        if i < len(daily.get("temperature_2m_min", [])) and i < len(daily.get("temperature_2m_max", [])):
+            min_temp = round(daily["temperature_2m_min"][i])
+            max_temp = round(daily["temperature_2m_max"][i])
+            print(f"\n🌡 일일 기온: 최저 {min_temp} °C / 최고 {max_temp} °C")
+
+        print("\n==================================================")
